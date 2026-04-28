@@ -2,24 +2,24 @@ import io
 import time
 import numpy as np
 import requests
-import json
-import os
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from faster_whisper import WhisperModel
 import scipy.io.wavfile as wavfile
 
-app = FastAPI(title="Local Dictation Backend")
+try:
+    # Preferred: shared app-data paths (works for PyInstaller one-file builds)
+    from app_paths import load_settings, get_models_dir
+except Exception:  # pragma: no cover
+    # Fallback for running this module directly from backend/app/
+    import sys
+    from pathlib import Path
 
-def load_settings():
-    try:
-        settings_path = os.path.join(os.path.dirname(__file__), '..', '..', 'settings.json')
-        with open(settings_path, 'r') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"Error loading settings: {e}. Using defaults.")
-        return {"model": "large-v3", "language": "en"}
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+    from app_paths import load_settings, get_models_dir
+
+app = FastAPI(title="Local Dictation Backend")
 
 initial_settings = load_settings()
 
@@ -27,9 +27,27 @@ model: WhisperModel | None = None
 
 def reload_model(settings: dict):
     global model
-    model_name = settings.get("model", "large-v3")
-    print(f"Loading Whisper Model ({model_name})...")
-    model = WhisperModel(model_name, device="cuda", compute_type="float16")
+    model_name = settings.get("model", "large-v3-turbo")
+    device = "cpu"
+    compute_type = "int8"
+
+    try:
+        import ctranslate2
+
+        if int(ctranslate2.get_cuda_device_count()) > 0:
+            device = "cuda"
+            compute_type = "float16"
+    except Exception:
+        # No CUDA runtime / not installed; fall back to CPU.
+        pass
+
+    print(f"Loading Whisper Model ({model_name}) on {device} ({compute_type})...")
+    model = WhisperModel(
+        model_name,
+        device=device,
+        compute_type=compute_type,
+        download_root=str(get_models_dir()),
+    )
     print("Model loaded.")
 
 reload_model(initial_settings)
@@ -114,7 +132,7 @@ async def transcribe_file(
 async def reload_settings():
     settings = load_settings()
     reload_model(settings)
-    return {"success": True, "model": settings.get("model", "large-v3")}
+    return {"success": True, "model": settings.get("model", "large-v3-turbo")}
 
 if __name__ == "__main__":
     import uvicorn
