@@ -1,0 +1,15 @@
+faster-whisper
+sounddevice
+soundfile
+numpy
+scipy
+requests
+pyperclip
+pynput
+pystray
+Pillow
+uvicorn
+fastapi
+python-multipart
+pydantic
+pywin32

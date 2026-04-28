@@ -1,0 +1,35 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Logs
+dictation.log
+
+
+# Whisper model cache (downloaded automatically, can be large)
+~/.cache/huggingface/
+*.bin
+*.pt
+*.gguf
+
+# Sensitive / local config
+.env
+.env.*
+secrets.*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.user

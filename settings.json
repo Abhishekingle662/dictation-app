@@ -1,0 +1,8 @@
+{
+    "model": "large-v3",
+    "language": "en",
+    "use_llm_rewrite": true,
+    "llm_model": "large-v3",
+    "hotkey": "f8",
+    "duration": 5
+}
